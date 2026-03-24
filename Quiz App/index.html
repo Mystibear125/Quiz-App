@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Quiz App</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #f7f3ee;
+      --card: #ffffff;
+      --ink: #1a1a1a;
+      --muted: #999;
+      --border: #ebebeb;
+      --accent: #e8450a;
+      --accent-light: #fde8e0;
+      --correct: #16a34a;
+      --correct-light: #dcfce7;
+      --wrong: #dc2626;
+      --wrong-light: #fee2e2;
+    }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 1rem;
+    }
+
+    .container { width: 100%; max-width: 520px; }
+
+    /* Header */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin-bottom: 1.5rem;
+      animation: fadeDown 0.4s ease both;
+    }
+
+    .title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 3rem;
+      color: var(--ink);
+      line-height: 1;
+      letter-spacing: 0.02em;
+    }
+
+    .title span { color: var(--accent); }
+
+    .high-score-box { text-align: right; }
+    .high-score-box p { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); }
+    #high-score { font-family: 'Bebas Neue', sans-serif; font-size: 1.6rem; color: var(--ink); line-height: 1; }
+
+    /* Progress */
+    .progress-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.5rem;
+      animation: fadeDown 0.4s 0.05s ease both;
+    }
+
+    .progress-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+    #question-counter { font-size: 0.75rem; font-weight: 600; color: var(--ink); }
+
+    .progress-track {
+      height: 4px;
+      background: var(--border);
+      border-radius: 999px;
+      margin-bottom: 1.5rem;
+      overflow: hidden;
+      animation: fadeDown 0.4s 0.1s ease both;
+    }
+
+    #progress-bar {
+      height: 100%;
+      background: var(--accent);
+      border-radius: 999px;
+      width: 0%;
+      transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* Card */
+    .card {
+      background: var(--card);
+      border-radius: 20px;
+      padding: 2rem;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 8px 32px rgba(0,0,0,0.07);
+      animation: fadeUp 0.4s 0.15s ease both;
+    }
+
+    /* Timer */
+    .timer-row { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1.5rem; }
+    .timer-track { flex: 1; height: 6px; background: var(--border); border-radius: 999px; overflow: hidden; }
+
+    #timer-bar {
+      height: 100%;
+      width: 100%;
+      background: var(--accent);
+      border-radius: 999px;
+      transition: width 1s linear, background 0.3s;
+    }
+
+    #timer-text { font-family: 'Bebas Neue', sans-serif; font-size: 1.3rem; color: var(--ink); min-width: 28px; text-align: right; }
+
+    /* Question */
+    #question-text {
+      font-size: 1.15rem;
+      font-weight: 600;
+      color: var(--ink);
+      line-height: 1.5;
+      margin-bottom: 1.5rem;
+      min-height: 3.5rem;
+    }
+
+    /* Options */
+    #options-list { list-style: none; display: flex; flex-direction: column; gap: 0.6rem; }
+
+    .option-btn {
+      width: 100%;
+      padding: 0.8rem 1rem;
+      background: var(--bg);
+      border: 1.5px solid var(--border);
+      border-radius: 12px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.92rem;
+      font-weight: 500;
+      color: var(--ink);
+      cursor: pointer;
+      text-align: left;
+      transition: border-color 0.15s, background 0.15s, transform 0.1s;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .option-btn:hover:not(:disabled) { border-color: var(--accent); background: var(--accent-light); transform: translateX(3px); }
+    .option-btn .option-letter { font-family: 'Bebas Neue', sans-serif; font-size: 1rem; color: var(--muted); min-width: 18px; }
+    .option-btn.correct { background: var(--correct-light); border-color: var(--correct); color: var(--correct); }
+    .option-btn.correct .option-letter { color: var(--correct); }
+    .option-btn.wrong { background: var(--wrong-light); border-color: var(--wrong); color: var(--wrong); }
+    .option-btn.wrong .option-letter { color: var(--wrong); }
+    .option-btn:disabled { cursor: not-allowed; }
+
+    /* Feedback */
+    #feedback { margin-top: 1rem; font-size: 0.85rem; font-weight: 600; min-height: 1.2em; color: var(--muted); text-align: center; }
+
+    /* Start screen */
+    #start-screen { text-align: center; padding: 1rem 0; }
+    .start-icon { font-size: 3rem; margin-bottom: 1rem; }
+    .start-title { font-family: 'Bebas Neue', sans-serif; font-size: 1.8rem; color: var(--ink); margin-bottom: 0.5rem; }
+    .start-sub { font-size: 0.88rem; color: var(--muted); margin-bottom: 1.5rem; line-height: 1.6; }
+
+    #start-btn {
+      padding: 0.75rem 2.5rem;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+    }
+
+    #start-btn:hover { background: #c73a08; transform: translateY(-1px); }
+
+    /* Result screen */
+    #result-screen { display: none; text-align: center; padding: 1rem 0; }
+    .result-emoji { font-size: 3rem; margin-bottom: 1rem; }
+    .result-title { font-family: 'Bebas Neue', sans-serif; font-size: 2.5rem; color: var(--ink); letter-spacing: 0.02em; margin-bottom: 0.4rem; }
+    .result-sub { font-size: 0.9rem; color: var(--muted); margin-bottom: 1.5rem; }
+    .score-display { font-family: 'Bebas Neue', sans-serif; font-size: 5rem; color: var(--accent); line-height: 1; margin-bottom: 0.25rem; }
+    .score-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin-bottom: 1.5rem; }
+    .new-badge { display: inline-block; background: var(--accent); color: #fff; font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; padding: 0.25rem 0.6rem; border-radius: 999px; margin-bottom: 1rem; }
+
+    #restart-btn {
+      padding: 0.75rem 2.5rem;
+      background: var(--ink);
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+    }
+
+    #restart-btn:hover { background: #333; transform: translateY(-1px); }
+
+    /* Animations */
+    @keyframes fadeDown {
+      from { opacity: 0; transform: translateY(-12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+
+    <div class="header">
+      <h1 class="title">Quiz<span>.</span></h1>
+      <div class="high-score-box">
+        <p>Best Score</p>
+        <div id="high-score">0</div>
+      </div>
+    </div>
+
+    <div class="progress-row">
+      <span class="progress-label">Progress</span>
+      <span id="question-counter">0 / 0</span>
+    </div>
+    <div class="progress-track">
+      <div id="progress-bar"></div>
+    </div>
+
+    <div class="card">
+
+      <!-- Start Screen -->
+      <div id="start-screen">
+        <div class="start-icon">🧠</div>
+        <h2 class="start-title">Ready to play?</h2>
+        <p class="start-sub">10 questions · 15 seconds each<br/>Your best score is saved automatically.</p>
+        <button id="start-btn">Start Quiz</button>
+      </div>
+
+      <!-- Quiz Screen -->
+      <div id="quiz-screen" style="display:none">
+        <div class="timer-row">
+          <div class="timer-track">
+            <div id="timer-bar"></div>
+          </div>
+          <div id="timer-text"></div>
+        </div>
+        <p id="question-text"></p>
+        <ul id="options-list"></ul>
+        <p id="feedback"></p>
+      </div>
+
+      <!-- Result Screen -->
+      <div id="result-screen">
+        <div class="result-emoji">🎉</div>
+        <h2 class="result-title">Quiz Complete</h2>
+        <p class="result-sub">Here's how you did</p>
+        <div class="score-display" id="final-score">0</div>
+        <p class="score-label">points scored</p>
+        <div id="new-high-badge" class="new-badge" style="display:none">🏆 New High Score!</div>
+        <br/>
+        <button id="restart-btn">Play Again</button>
+      </div>
+
+    </div>
+  </div>
+
+  <script src="script.js">
+  </script>
+</body>
+</html>
